@@ -1,9 +1,8 @@
 # HOME ALARM SYSTEM
 
 af224dz
-
 ****
-**Project Description**
+## **Project Description**
 ****
 
 
@@ -20,7 +19,7 @@ Also the IDE known as thonny will be utilized and the scource code with be in mi
 Estimated time: 20-25 hours if all materials are already available and no prior iot experience.
 
 ****
-**Objective**
+## **Objective**
 ****
 
 The main motivation behind this project is testing and combining various easily available sensors as well as creating a home utility device.
@@ -29,7 +28,7 @@ Through remote activation i can set up the alarm device for my flat room or the 
 
 In case iam able to further incorporate the arducam OV7675 in this project i may be able to capture images of any dected home intrusion as well.
 ****
-**Purpose and insights**
+## **Purpose and insights**
 ****
 The following tutorial will include various hardware components that will be outlined in detail and a step by step process of setting up the required IDE and other software as well as the pin locations on the breadboard for connecting the jumping wires to the required pins.
 
@@ -42,7 +41,7 @@ Hopefully by the end the reader will have gained knowledge on how a micro contro
 
 
 ****
-**Materials**
+## **Materials**
 ****
 
 
@@ -57,8 +56,68 @@ Hopefully by the end the reader will have gained knowledge on how a micro contro
 | <img src="https://www.electrokit.com/cache/4c/700x700-product_40810_40810310_40810310.png" alt="Resistor carbon film 0.25W 1kohm (1k)" width="100"> | [Resistor carbon film 0.25W 1kohm (1k)](https://www.electrokit.com/en/motstand-kolfilm-0.25w-1kohm-1k) | Resistors to limit current and divide voltages. | 1 SEK |
 | <img src="https://www.electrokit.com/upload/product/41018/41018852/41018852.jpg" alt="" width="100"> | [Tilt switch](https://www.electrokit.com/tiltswitch-5vdc-vertikal) | Tilt switch sensor that detects changes in orientation or inclination. |18.50 SEK|
 | <img src="https://www.electrokit.com/upload/product/41015/41015730/41015730.jpg" alt="" width="100"> | [Hall effect sensor digital](https://www.electrokit.com/tiltswitch-5vdc-vertikal) | Hall effect sensor that detects magnetic changes | 39 SEK |
+ <img src="https://www.electrokit.com/upload/quick/36/bf/5f05_41015493.jpg" alt="" width="100"> | [USB cable A male - micro B male 5m](https://www.electrokit.com/tiltswitch-5vdc-vertikal) | Cable that will be used for data transfer | 39 SEK |
 
 
+
+
+
+
+
+****
+
+
+## **Einvironment Setup**
+
+****
+For the environment i initially  used Vscode as i have used it for other projects however i found issues in oppening and re oppening the folders and files in the Pico W using Vscode and Pymakr.
+
+As such i opted for a much simpler IDE named thonny that only required downloading and choosing the device when connecting.
+***
+### Step 1:
+***
+
+* Download python from the official python website 
+
+* Install Node js (needed for the plugin)
+
+
+* Download and and try Thonny
+
+* Have your Raspberry Pi Pico board ready and remove the sponge
+
+* Have a USB cable
+***
+### Step 2:
+***
+* Download the Raspberry Pi Pico W / RP2040 micropython firmware
+
+* Connect the micro usb the end of your cable to the pico.
+
+
+* While holding the BOOTSEL key button connect the usb type A to 
+your computer .
+
+* After you have done so release the button .
+
+* You will see a new drive open with a specific RPI related name .Which is the pico storage .
+
+* **Once that happens,** copy paste the firm ware file in that storage. Wait for the board to automatically disconnect from the computer .
+
+* To test that everything is okay, unplag and plug back the usb cable.
+***
+
+### Step 3: 
+
+***
+
+
+
+
+
+
+
+****
 
 
 
