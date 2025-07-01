@@ -35,11 +35,25 @@ In case iam able to further incorporate the arducam OV7675 in this project i may
 
 
 
+| Image | Item | Description | Cost |
+| --- | --- | --- | --- |
+| <img src="https://www.electrokit.com/cache/ba/700x700-product_41019_41019114_PICO-WH-HERO.jpg" alt="Raspberry Pi Pico W" width="100"> | [Raspberry Pi Pico W](https://www.electrokit.com/en/raspberry-pi-pico-wh) | The core microcontroller for managing system operations. | 99 SEK |
+| <img src="https://www.electrokit.com/upload/product/41015/41015509/41015509.jpg" alt="PIR motion sensor HC-SR501" width="100"> | [PIR motion sensor HC-SR501](https://www.electrokit.com/en/pir-rorelsedetektor-hc-sr501) | Detects any movement within the monitored area. | 49 SEK |
+| <img src="https://www.electrokit.com/resource/uC96/9pI/fLkXATsC8m/product/41016/41016226/41016226.webp" alt="Passive piezo buzzer 3.8 kHz" width="100"> | [Passive piezo buzzer 3.8 kHz](https://www.electrokit.com/piezoelement-12x8.5mm-passiv) | Passive buzzer that acts as a sound alarm | 12 SEK |
+| <img src="https://www.electrokit.com/cache/b9/700x700-product_41012_41012686_41012686.jpg" alt="Jumper wires" width="100"> | [Jumper wires](https://www.electrokit.com/en/labbsladd-40-pin-30cm-hona/hane) | They are used to connect components on the breadboard and microcontroller. | 55 SEK |
+| <img src="https://www.electrokit.com/upload/product/10160/10160840/10160840.jpg" alt="Breadboard" width="100"> | [Breadboard](https://www.electrokit.com/en/kopplingsdack-840-anslutningar) | A board for making solderfree experiment circuits for prototyping. | 69 SEK |
+| <img src="https://www.electrokit.com/cache/4c/700x700-product_40810_40810310_40810310.png" alt="Resistor carbon film 0.25W 1kohm (1k)" width="100"> | [Resistor carbon film 0.25W 1kohm (1k)](https://www.electrokit.com/en/motstand-kolfilm-0.25w-1kohm-1k) | Resistors to limit current and divide voltages. | 1 SEK |
+| <img src="https://www.electrokit.com/upload/product/41018/41018852/41018852.jpg" alt="" width="100"> | [Tilt switch](https://www.electrokit.com/tiltswitch-5vdc-vertikal) | Tilt switch sensor that detects changes in orientation or inclination. |18.50 SEK|
+| <img src="https://www.electrokit.com/upload/product/41015/41015730/41015730.jpg" alt="" width="100"> | [Hall effect sensor digital](https://www.electrokit.com/tiltswitch-5vdc-vertikal) | Hall effect sensor that detects magnetic changes | 39 SEK |
+
+
+
 
 
 
 
 ****
+
 
 
 
