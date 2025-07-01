@@ -2,8 +2,8 @@ import keys
 import network
 from time import sleep
 
-WIFI_SSID = 'FBI Surveillance Van'
-WIFI_PASS = 'NoHack2017dammit'
+WIFI_SSID = ' '
+WIFI_PASS = ' '
 
 def connect():
     wlan = network.WLAN(network.STA_IF)         # Put modem on Station mode
