@@ -3,9 +3,9 @@
 ****
 
 
-For this project we are creating a security alarm device that through various ways detects motion when activated remotely or by a tilt switch and triggers an alarm and notifies the house owner of the detected inruder via a message. 
+For this tutorial we are creating a security alarm device that through various ways detects motion when activated remotely or by a tilt switch and triggers an alarm and notifies the house owner of the detected inruder via a message. 
 
-The device utilizes a bread board, a pico w microcontroller several complementary sensors such as a PIR sensor,hall effect digital sensor ,a passive buzzer and a tilt switch. 
+The device utilizes a bread board, a pico w microcontroller several complementary sensors such as a PIR sensor,hall effect digital sensor , a passive buzzer and a tilt switch. 
 
 Furthermore for data visualization Adafruit will be used and to publish data to Adafruit the arduino MQTT libray will be used. 
 
@@ -24,6 +24,14 @@ The main motivation behind this project is testing and combining various easily 
 Through remote activation i can set up the alarm device for my flat room or the main entrance to the building and be notified via discord message of any intrusion and call the police in time.
 
 In case iam able to further incorporate the arducam OV7675 in this project i may be able to capture images of any dected home intrusion as well.
+****
+**Purpose and insights**
+****
+The following tutorial will include various hardware components that will be outlined in detail and a step by step process of setting up the required IDE and other software as well as the pin locations on the breadboard for connecting the jumping wires to the required pins.
+
+It will also include code snippets from important fucntions written in micropython.
+
+Hopefully by the end the reader will have gained knowledge on how a micro controller can interact with micropython operations and affect the various connected sensors as well gaining knowledge on how to set up wifi connectivity and establish MQTT clients for the micro controller.
 
 
 
@@ -50,9 +58,6 @@ In case iam able to further incorporate the arducam OV7675 in this project i may
 
 
 
-
-
-****
 
 
 
