@@ -74,7 +74,7 @@ For the environment i initially  used Vscode as i have used it for other project
 
 As such i opted for a much simpler IDE named thonny that only required downloading and choosing the device when connecting.
 ***
-### Step 1:
+### Step 1: Installing the IDE 
 ***
 
 * Download python from the official python website 
@@ -88,7 +88,7 @@ As such i opted for a much simpler IDE named thonny that only required downloadi
 
 * Have a USB cable
 ***
-### Step 2:
+### Step 2: Installing and updating firmware
 ***
 * Download the Raspberry Pi Pico W / RP2040 micropython firmware
 
@@ -107,24 +107,109 @@ your computer .
 * To test that everything is okay, unplag and plug back the usb cable.
 ***
 
-### Step 3: 
+### Step 3: Testing Pico W responsiveness in Thonny
 
 ***
 
+* After you have recconected the Pico thonny then from the bottom side of the terminal make sure you choose the appropriate device ![image](https://hackmd.io/_uploads/HyXG-WGSgx.png)
+
+* Then navigate to open files and folder choose the Pico W device instead of computer and open main.py.Also depicted in the above image.
+
+* Once there you can test the picos on board led responsiveness by using the following code sample:
+
+        from machine import Pin # import Pin definitions
+        import time # import timer library
+
+        define GP25 as output pin
+        redLED = Pin(25, Pin.OUT)
+
+        start loop
+        while True:    
+            redLED.on() # turn on red LED
+            time.sleep(0.3) # wait 0.3 seconds
+            redLED.off() # turn off red LED
+            time.sleep(0.8) # wait 0.8 second
+* If succesfull congrats its time to go to the next step of establishing connectivity
 
 
+
+***
+
+### Step 4: Wifi Connectivity
+
+***
+
+* Navigate to keys.py in the Pico files and fill in the SSID and wifi password 
+
+* Afterwards navigate to boot.py and import keys , the network library and import sleep from time.
+
+* Next create a connect() function which uses the network library to create a WLAN object in station mode .Meaning the pico will connect to an access point 
+* Following this use the object to enable the wifi interface,set the power mode and connect using your credeintilas after already checking for an existing connection.
+* The function then should get and print the IP adress
+* To accomodate the connect() function create also create an httpget() function.Which takes a url adress as an argument.
+* It then should split the url to components such as host or path or http using the in built .split method.
+* It shen should open a socket and connect it to the IPs adress
+* Finally it should send an http get request to the host with a specific path.
+* Here is a working example of what the boot.py file should look like:
+* 
+        import keys
+        import network
+        from time import sleep
+
+        def connect():
+            wlan = network.WLAN(network.STA_IF)         # Put modem on Station mode
+            if not wlan.isconnected():                  # Check if already connected
+                print('connecting to network...')
+                wlan.active(True)                       # Activate network interface
+                # set power mode to get WiFi power-saving off (if needed)
+                wlan.config(pm = 0xa11140)
+                wlan.connect(keys.WIFI_SSID, keys.WIFI_PASS)  # Your WiFi Credential
+                print('Waiting for connection...', end='')
+                # Check if it is connected otherwise wait
+                while not wlan.isconnected() and wlan.status() >= 0:
+                    print('.', end='')
+                    sleep(1)
+            # Print the IP assigned by router
+            ip = wlan.ifconfig()[0]
+            print('\nConnected on {}'.format(ip))
+            return ip
+
+        def http_get(url = 'http://detectportal.firefox.com/'):
+            import socket                           # Used by HTML get request
+            import time                             # Used for delay
+            _, _, host, path = url.split('/', 3)    # Separate URL request
+            addr = socket.getaddrinfo(host, 80)[0][-1]  # Get IP address of host
+            s = socket.socket()                     # Initialise the socket
+            s.connect(addr)                         # Try connecting to host address
+            # Send HTTP request to the host with specific path
+            s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))    
+            time.sleep(1)                           # Sleep for a second
+            rec_bytes = s.recv(10000)               # Receve response
+            print(rec_bytes)                        # Print the response
+            s.close()                               # Close connection
+
+        # WiFi Connection
+        try:
+            ip = connect()
+        except KeyboardInterrupt:
+            print("Keyboard interrupt")
+
+        # HTTP request
+        try:
+            http_get()
+        except (Exception, KeyboardInterrupt) as err:
+            print("No Internet", err)
 
 
 
 
 ****
 
+***
 
+### Step 5: Adafruit 
 
-
-
-
-
+***
 
 
 
