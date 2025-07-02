@@ -111,7 +111,7 @@ your computer .
 
 ***
 
-* After you have recconected the Pico thonny then from the bottom side of the terminal make sure you choose the appropriate device ![image](https://hackmd.io/_uploads/HyXG-WGSgx.png)
+* After you have recconected the Pico thonny then from the bottom side of the terminal make sure you choose the appropriate device ![image](https://hackmd.io/_uploads/HyXG-WGSgx.md)
 
 * Then navigate to open files and folder choose the Pico W device instead of computer and open main.py.Also depicted in the above image.
 
