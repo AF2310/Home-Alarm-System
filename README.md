@@ -4,7 +4,6 @@
 ****
 
 
-
 ****
 
 ## **Project Description**
@@ -586,12 +585,34 @@ your computer .
                         prev_alarm = alarm_state
 * Then run the program after creating a new dashboard with the feed selecting the related blocks and the results should look like this:
 
-* ![image](https://hackmd.io/_uploads/rkzgG0XSlg.png)
+* ![image](https://hackmd.io/_uploads/Hyh8dRmSel.png)
+* ![image](https://hackmd.io/_uploads/BJzO_0XHxx.png)
 
 
 
 
+****
 
+***
 
+## Webhook message notification
+
+***
+* After the visualization with the project is finnished.You can include message notification of activated alarm via discord that will prompt the user to either call the police or close the alarm remotely via adafruit.
+
+* First navigate to actions on your adafruit panel
+* Secondly click on creating a new action ![image](https://hackmd.io/_uploads/S1mcYCmHlx.png)
+* Thirdly navigate to triggers and choose the apropriate feed for and the appropriate condition for that feed and attach it to the block
+* Then navigate to notifications and attach the webhook option in the block inside the Webhook block fill in content and username as they are depicted in the picture.
+* ![image](https://hackmd.io/_uploads/SyAO90Xreg.png)
+* Then navigate to your discord account and create a server . Then in server settings navigate to integrations and click the create new Webhook option.
+
+* ![image](https://hackmd.io/_uploads/r1HCiR7See.png)
+
+* Once you have done that copy the webhook url into the url box and click to save the changes
+* If everything was executed correctly you should be now notified oh whenever the alarm has detected something while enabled 
+* ![image](https://hackmd.io/_uploads/Skzt2Amrxx.png)
+
+***
 
 
