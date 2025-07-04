@@ -1,7 +1,10 @@
 ****
-# HOME ALARM SYSTEM
 
+# **HOME ALARM SYSTEM**
 ****
+
+Achilles Feratidis / af224dz
+
 
 
 ****
@@ -14,7 +17,7 @@ For this tutorial we are creating a security alarm device that through various w
 
 The device utilizes a bread board, a pico w microcontroller several complementary sensors such as a PIR sensor,hall effect digital sensor , a passive buzzer and a tilt switch. 
 
-Furthermore for data visualization Adafruit will be used and to publish data to Adafruit the arduino MQTT libray will be used. 
+Furthermore for data visualization Adafruit will be used and to publish data to Adafruit the using MQTT client will be used. 
 
 Finally for connectivity wifi will be used and for notifying the house owner via Adafruit actions using a webhook the application known as discord will be used.
 
@@ -31,6 +34,8 @@ The main motivation behind this project is testing and combining various easily 
 Through remote activation i can set up the alarm device for my flat room or the main entrance to the building and be notified via discord message of any intrusion and call the police in time.
 
 In case iam able to further incorporate the arducam OV7675 in this project i may be able to capture images of any dected home intrusion as well.
+
+Ultra sonic ranging module and a photo resistor could also complement existing sensors 
 ****
 ## **Purpose and insights**
 ****
@@ -117,108 +122,6 @@ your computer .
 ***
 
 * After you have recconected the Pico thonny then from the bottom side of the terminal make sure you choose the appropriate device ![image](https://hackmd.io/_uploads/HyXG-WGSgx.png)
-
-* Then navigate to open files and folder choose the Pico W device instead of computer and open main.py.Also depicted in the above image.
-
-* Once there you can test the picos on board led responsiveness by using the following code sample:
-
-        from machine import Pin # import Pin definitions
-        import time # import timer library
-
-        define GP25 as output pin
-        redLED = Pin(25, Pin.OUT)
-
-        start loop
-        while True:    
-            redLED.on() # turn on red LED
-            time.sleep(0.3) # wait 0.3 seconds
-            redLED.off() # turn off red LED
-            time.sleep(0.8) # wait 0.8 second
-* If succesfull congrats its time to go to the next step of establishing connectivity
-
-
-
-***
-
-### Step 4: Wifi Connectivity
-
-***
-
-* Navigate to keys.py in the Pico files and fill in the SSID and wifi password 
-
-* Afterwards navigate to boot.py and import keys , the network library and import sleep from time.
-
-* Next create a connect() function which uses the network library to create a WLAN object in station mode .Meaning the pico will connect to an access point 
-* Following this use the object to enable the wifi interface,set the power mode and connect using your credeintilas after already checking for an existing connection.
-* The function then should get and print the IP adress
-* To accomodate the connect() function create also create an httpget() function.Which takes a url adress as an argument.
-* It then should split the url to components such as host or path or http using the in built .split method.
-* It shen should open a socket and connect it to the IPs adress
-* Finally it should send an http get request to the host with a specific path.
-* Here is a working example of what the boot.py file should look like:
-* 
-        import keys
-        import network
-        from time import sleep
-
-        def connect():
-            wlan = network.WLAN(network.STA_IF)         # Put modem on Station mode
-            if not wlan.isconnected():                  # Check if already connected
-                print('connecting to network...')
-                wlan.active(True)                       # Activate network interface
-                # set power mode to get WiFi power-saving off (if needed)
-                wlan.config(pm = 0xa11140)
-                wlan.connect(keys.WIFI_SSID, keys.WIFI_PASS)  # Your WiFi Credential
-                print('Waiting for connection...', end='')
-                # Check if it is connected otherwise wait
-                while not wlan.isconnected() and wlan.status() >= 0:
-                    print('.', end='')
-                    sleep(1)
-            # Print the IP assigned by router
-            ip = wlan.ifconfig()[0]
-            print('\nConnected on {}'.format(ip))
-            return ip
-
-        def http_get(url = 'http://detectportal.firefox.com/'):
-            import socket                           # Used by HTML get request
-            import time                             # Used for delay
-            _, _, host, path = url.split('/', 3)    # Separate URL request
-            addr = socket.getaddrinfo(host, 80)[0][-1]  # Get IP address of host
-            s = socket.socket()                     # Initialise the socket
-            s.connect(addr)                         # Try connecting to host address
-            # Send HTTP request to the host with specific path
-            s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))    
-            time.sleep(1)                           # Sleep for a second
-            rec_bytes = s.recv(10000)               # Receve response
-            print(rec_bytes)                        # Print the response
-            s.close()                               # Close connection
-
-        # WiFi Connection
-        try:
-            ip = connect()
-        except KeyboardInterrupt:
-            print("Keyboard interrupt")
-
-        # HTTP request
-        try:
-            http_get()
-        except (Exception, KeyboardInterrupt) as err:
-            print("No Internet", err)
-
-
-
-
-****
-
-***
-
-### Step 5: Adafruit 
-
-***
-
-
-
-
 
 * Then navigate to open files and folder choose the Pico W device instead of computer and open main.py.Also depicted in the above image.
 
@@ -615,4 +518,119 @@ your computer .
 
 ***
 
+***
 
+## Power calculation
+
+***
+* To able to calculate the total power consumption in total  and for each sensor and the board  we will use variations of the following the following formulas Power (W) = Voltage (V) × Current (I) and 
+Energy (Wh) = Power (W) × Time (h) that will include active and idle current . These formulas have been used for measurement in [Arduino boards](https://www.aranacorp.com/en/power-measurement-with-arduino-and-ina219/) . 
+
+* The idea is that  electrical Power exchanged by two devices is calculated by multiplying the voltage and the current and that Energy is the power consumed by the device over time .
+
+* We then need to find the active and idle states of the sensors and the board based on scources and datasheets.
+
+* First based on the Raspberry Pi Pico Datasheet: An RP2040-based microcontroller board. We know that the idle and active current are the same at 0.050 and that in general the pico power is constant
+(im having trouble including the pdfs as links)
+* Secondly for The Wifi module from datasheets we know that the idle current is at 0.090 A and active current at 0.100 A
+* For other sensors and power scources from sensor datasheets we get in Am
+
+        I_PICO = 0.050
+        I_WIFI_IDLE = 0.090
+        I_WIFI_ACTIVE = 0.100
+        I_PIR_IDLE = 0.00005
+        I_PIR_ACTIVE = 0.065
+        I_HALL = 0.005
+        I_BUZZER = 0.040
+
+* After we initialize the idle and active states we will create a calculation function which calculates power by multiplying by voltage total maximum power,average power and energy by multiplying power with time for efficiency monitoring:
+
+        def calculate_power_usage():
+             # converts idle and active time from seconds to hours
+            idle_hours = idle_seconds / 3600
+            triggered_hours = triggered_seconds / 3600
+            
+            # Watts power consumption for each component using  P = V * I
+            
+            # and for active and idle currents
+            
+            # Voltage was initilized as 5 which isnt always true 
+            
+            power_pico = VOLTAGE * I_PICO
+            power_wifi_idle = VOLTAGE * I_WIFI_IDLE
+            power_wifi_active = VOLTAGE * I_WIFI_ACTIVE
+            power_pir_idle = VOLTAGE * I_PIR_IDLE
+            power_pir_active = VOLTAGE * I_PIR_ACTIVE
+            power_hall = VOLTAGE * I_HALL
+            power_buzzer = VOLTAGE * I_BUZZER
+            
+            # power active and idle over time / by total time spent idle or active
+            
+            # i was getting errors that i found out was because of division by zero so i added 1e-6 in the end
+            
+            ...
+            avg_power_pir = (power_pir_idle * idle_seconds + power_pir_active * triggered_seconds) / (idle_seconds + triggered_seconds + 1e-6)
+            avg_power_hall = power_hall * (triggered_seconds / (idle_seconds + triggered_seconds + 1e-6))
+            ...
+
+            # total power over time 
+            
+            total_power = power_pico + avg_power_wifi + avg_power_pir + avg_power_hall + avg_power_buzzer
+            
+
+            # maximum total power if only active 
+            
+            total_power_max = power_pico + power_wifi_active + power_pir_active + power_hall + power_buzzer
+
+            # Energy consumption multiplies idle time with idle current 
+            
+            # Then sums it with active time times active current 
+            ...
+            energy_pir = (power_pir_idle * idle_hours) + (power_pir_active * triggered_hours)
+            ...
+
+
+            # total energy consumption
+            
+            total_energy = energy_pico + energy_wifi + energy_pir + energy_hall + energy_buzzer
+            
+* We will then place the calculation function in the loop of the alarm function and it will be called after a period of time 
+* The results we get are the following (average powers werent printed)
+* ![image](https://hackmd.io/_uploads/B1LAcmrBxx.png)
+
+* If we initialize new feeds for energy consumption of each component in keys.py and add them in the calculate_power() function.After the the total energy calculation .
+* We can visualize total energy consumption and energy consumption for each component for efficiency moniroting
+
+        send_feed(keys.AIO_POWER_PICO_FEED, round(energy_pico, 3))
+        send_feed(keys.AIO_POWER_WIFI_FEED, round(energy_wifi, 3))
+        send_feed(keys.AIO_POWER_PIR_FEED, round(energy_pir, 3))
+        send_feed(keys.AIO_POWER_HALL_FEED, round(energy_hall, 3))
+        send_feed(keys.AIO_POWER_BUZZER_FEED, round(energy_buzzer, 3))
+        send_feed(keys.AIO_POWER_TOTAL_FEED, round(total_energy, 3))
+
+* ![image](https://hackmd.io/_uploads/SJ3K7GBSlx.png)
+
+
+***
+
+## Transmitting data 
+***
+
+* Message transmission is established partly through wifi connection that utilizes the existing network library as explained earlier.
+* However looking more closely into the mqtt.py file and the imported MQTT client
+* It can be noted a dictionary of data is sent over the network using .publish() from the MQTTClient class.
+
+* The MQTT protocol is used to transmit the message.
+
+* Adafruit a third party then receives the data it also has access to API keys and other potential sensitive information which may undermine the purpose of a home security device.
+***
+
+
+***
+
+## Finalizing the design 
+***
+
+Final result of the project: ![image](https://hackmd.io/_uploads/HJp0W4BBxe.png)
+This is the current state of the project it may be updated with a photo resistor or an arducam camera . It would have included an ultra ranging modue as well but unfortunately the one i had wasnt working .
+***
