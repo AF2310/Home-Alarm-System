@@ -65,10 +65,12 @@ def calculate_power_usage():
     
     avg_power_wifi = (power_wifi_idle * idle_seconds + power_wifi_active * triggered_seconds) / (idle_seconds + triggered_seconds + 1e-6)
     avg_power_pir = (power_pir_idle * idle_seconds + power_pir_active * triggered_seconds) / (idle_seconds + triggered_seconds + 1e-6)
+    avg_power_hall = power_hall * (triggered_seconds / (idle_seconds + triggered_seconds + 1e-6))
+    avg_power_buzzer = power_buzzer * (triggered_seconds / (idle_seconds + triggered_seconds + 1e-6))
     
-    total_power = power_pico + avg_power_wifi + avg_power_pir + power_hall + power_buzzer
+    total_power = power_pico + avg_power_wifi + avg_power_pir + avg_power_hall + avg_power_buzzer
     
-    
+    total_power_max = power_pico + power_wifi_active + power_pir_active + power_hall + power_buzzer
     
     
     energy_pico = power_pico * (idle_hours + triggered_hours)
@@ -82,19 +84,20 @@ def calculate_power_usage():
     total_energy = energy_pico + energy_wifi + energy_pir + energy_hall + energy_buzzer
     
     
-    print(f"Pico Power:      {power_pico:.3f} W")
-    print(f"WiFi Idle Power: {power_wifi_idle:.3f} W")
-    print(f"WiFi Active:     {power_wifi_active:.3f} W")
-    print(f"PIR Idle:        {power_pir_idle:.5f} W")
-    print(f"PIR Active:      {power_pir_active:.3f} W")
-    print(f"Hall Sensor:     {power_hall:.3f} W")
+    print(f"Pico power:      {power_pico:.3f} W")
+    print(f"Wifi idle power: {power_wifi_idle:.3f} W")
+    print(f"Wifi active:     {power_wifi_active:.3f} W")
+    print(f"PIR idle:        {power_pir_idle:.5f} W")
+    print(f"PIR active:      {power_pir_active:.3f} W")
+    print(f"Hall:     {power_hall:.3f} W")
     print(f"Buzzer:          {power_buzzer:.3f} W")
-    print(f"→ Total Power:    {total_power:.3f} W")
+    print(f"Total average Power:    {total_power:.3f} W")
+    print(f"Total Power Max:{total_power_max:.3f} W")
     
     print(f"Idle time:      {idle_hours:.2f} h")
     print(f"Triggered time: {triggered_hours:.2f} h\n")
     print(f"Pico:       {energy_pico:.2f} Wh")
-    print(f"WiFi:           {energy_wifi:.2f} Wh")
+    print(f"Wifi:           {energy_wifi:.2f} Wh")
     print(f"PIR:     {energy_pir:.2f} Wh")
     print(f"Hall:    {energy_hall:.2f} Wh")
     print(f"Buzzer:         {energy_buzzer:.2f} Wh")
