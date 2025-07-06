@@ -1,5 +1,6 @@
 import time
 from machine import Pin, PWM
+from machine import ADC
 from mqtt import MQTTClient
 import keys
 
@@ -12,6 +13,12 @@ prev_tilt = tilt_switch.value()
 tilt_triggered = False
 alarm_enabled = True
 prev_alarm = None
+ldr = ADC(Pin(26))
+I_LDR = 0.005
+
+prev_light_per = None
+ldr_sent = 0
+ldr_duration = 10
 
 I_PICO = 0.050
 I_WIFI_IDLE = 0.090
@@ -79,11 +86,18 @@ def calculate_power_usage():
     energy_hall = power_hall * triggered_hours
     energy_buzzer = power_buzzer * triggered_hours
     
+    power_ldr = VOLTAGE * I_LDR
+    avg_power_ldr = power_ldr * (triggered_seconds / (idle_seconds + triggered_seconds + 1e-6))
+    energy_ldr = power_ldr * triggered_hours
+
+    total_power += avg_power_ldr
+    total_power_max += power_ldr
     
     
     total_energy = energy_pico + energy_wifi + energy_pir + energy_hall + energy_buzzer
+    total_energy += energy_ldr
     
-    
+        
     print(f"Pico power:      {power_pico:.3f} W")
     print(f"Wifi idle power: {power_wifi_idle:.3f} W")
     print(f"Wifi active:     {power_wifi_active:.3f} W")
@@ -101,11 +115,13 @@ def calculate_power_usage():
     print(f"PIR:     {energy_pir:.2f} Wh")
     print(f"Hall:    {energy_hall:.2f} Wh")
     print(f"Buzzer:         {energy_buzzer:.2f} Wh")
+    print(f"PHOTORESISTOR:             {power_ldr:.3f} W")
+    print(f"PHOTORESISTOR Energy:      {energy_ldr:.2f} Wh")
     
     print(f"Total:          {total_energy:.2f} Wh")
     
     send_feed(keys.AIO_POWER_PICO_FEED, round(energy_pico, 3))
-    send_feed(keys.AIO_POWER_WIFI_FEED, round(energy_wifi, 3))
+    #send_feed(keys.AIO_POWER_WIFI_FEED, round(energy_wifi, 3))
     send_feed(keys.AIO_POWER_PIR_FEED, round(energy_pir, 3))
     send_feed(keys.AIO_POWER_HALL_FEED, round(energy_hall, 3))
     send_feed(keys.AIO_POWER_BUZZER_FEED, round(energy_buzzer, 3))
@@ -118,6 +134,7 @@ print("MQTT connected and subscribed.")
 
 def alarm_loop():
     global alarm_enabled, prev_alarm , idle_seconds, triggered_seconds
+    global prev_light_per, ldr_sent, ldr_duration
     pir_prev = 0
     hall_prev = 1
     #prev_alarm = None
@@ -133,6 +150,7 @@ def alarm_loop():
     while True:
         try:
             client.check_msg()
+            ldr_trigger = False 
             
             tilt_state = tilt_switch.value()
             now = time.ticks_ms()
@@ -167,9 +185,27 @@ def alarm_loop():
                 else:
                     print("magnet cleared")
                     send_feed(keys.AIO_HALL_FEED, "0")
+                    
+            light = ldr.read_u16()
+            light_per = (light * 100) // 65535
+            current_time = time.time()
+            
+            if light_per >= 0.1:
+                print(f"UNTRACKED LIGHT DETECTION ({light_per}%) FOUND")
+                #send_feed(keys.AIO_LDR_FEED, light_per)
+                ldr_trigger = True
+            else:
+                #send_feed(keys.AIO_LDR_FEED, light_per)
+                ldr_trigger = False
+                
+            if ldr_trigger and light_per != prev_light_per and current_time - ldr_sent >= ldr_duration:
+                send_feed(keys.AIO_LDR_FEED, light_per)
+                prev_light_per = light_per
+                ldr_sent = current_time
+                
 
             if alarm_enabled:
-                if pir_state == 1 or hall_state == 0:
+                if pir_state == 1 or hall_state == 0 or ldr_trigger:
                     buzzer.freq(2000)
                     buzzer.duty_u16(3000)
                     alarm_state = "1"
