@@ -3,6 +3,8 @@ from machine import Pin, PWM
 from machine import ADC
 from mqtt import MQTTClient
 import keys
+from I2C_LCD import I2CLcd
+from machine import I2C
 
 pir_sensor = Pin(27, Pin.IN, Pin.PULL_UP)
 hall_sensor = Pin(16, Pin.IN)
@@ -17,12 +19,8 @@ ldr = ADC(Pin(26))
 I_LDR = 0.005
 
 prev_light_per = None
-light_per = None
 ldr_sent = 0
 ldr_duration = 5
-feed_last_sent = {}
-last_sent = {}
-FEED_duration = 5
 
 I_PICO = 0.050
 I_WIFI_IDLE = 0.090
@@ -35,6 +33,19 @@ VOLTAGE = 5
 
 idle_seconds = 0
 triggered_seconds = 0
+
+i2c = I2C(1, sda=Pin(14), scl=Pin(15), freq=400000)
+device = i2c.scan()
+lcd = None
+
+if device:
+    lcd = I2CLcd(i2c, device[0], 2, 16)
+    lcd.putstr("LCD INITIALIZED")
+    time.sleep(2)
+    lcd.clear()
+else:
+    print("No LCD")
+    lcd = None
 
 client = MQTTClient("alarm-device", keys.AIO_SERVER, keys.AIO_PORT, keys.AIO_USER, keys.AIO_KEY)
 
@@ -57,12 +68,6 @@ def sub_cb(topic, msg):
             #send_feed(keys.AIO_ALARM_FEED, "0")
 
 def send_feed(feed, value):
-    global feed_last_sent
-    now = time.time()
-    last_sent = feed_last_sent.get(feed, 0)
-    if now - last_sent < FEED_duration:
-        print(f"[SKIPPED] {feed} (sent {now - last_sent:.1f}s ago)")
-        return
     try:
         client.publish(feed, str(value))
     except Exception as e:
@@ -144,7 +149,7 @@ print("MQTT connected and subscribed.")
 
 def alarm_loop():
     global alarm_enabled, prev_alarm , idle_seconds, triggered_seconds
-    global prev_light_per, ldr_sent, ldr_duration , light_per
+    global prev_light_per, ldr_sent, ldr_duration
     pir_prev = 0
     hall_prev = 1
     #prev_alarm = None
@@ -155,8 +160,7 @@ def alarm_loop():
     prev_tilt = tilt_switch.value()
     last_tilt_change = time.ticks_ms()
     tilt_debounce_ms = 300
-    last_time = time.time()
-    ldr_threshold = 5 
+    last_time = time.time() 
 
     while True:
         try:
@@ -196,9 +200,7 @@ def alarm_loop():
                 else:
                     print("magnet cleared")
                     send_feed(keys.AIO_HALL_FEED, "0")
-            
-            if prev_light_per is None:
-                prev_light_per = light_per  
+                    
             light = ldr.read_u16()
             light_per = (light * 100) // 65535
             current_time = time.time()
@@ -206,17 +208,12 @@ def alarm_loop():
             if light_per >= 0.1:
                 print(f"UNTRACKED LIGHT DETECTION ({light_per}%) FOUND")
                 #send_feed(keys.AIO_LDR_FEED, light_per)
-                #send_feed(keys.AIO_LDR_FEED, light_per)
                 ldr_trigger = True
             else:
-                print(f"NONE")
                 #send_feed(keys.AIO_LDR_FEED, light_per)
                 ldr_trigger = False
                 
-            
-                
-            if ldr_trigger and light_per - prev_light_per >= ldr_threshold and current_time - ldr_sent >= ldr_duration:
-                print("check")
+            if ldr_trigger and light_per != prev_light_per and current_time - ldr_sent >= ldr_duration:
                 send_feed(keys.AIO_LDR_FEED, light_per)
                 prev_light_per = light_per
                 ldr_sent = current_time
@@ -229,6 +226,19 @@ def alarm_loop():
                     alarm_state = "1"
                     buzz_timer += 1
                     triggered_seconds += 0.2
+                    if lcd:
+                        lcd.clear()
+                        lcd.move_to(0, 0)
+                        lcd.putstr("THE POLICE HAS")
+                        lcd.move_to(0, 1)
+                        lcd.putstr("BEEN NOTIFIED")
+                        time.sleep(2.5)
+                        lcd.clear()
+                        lcd.move_to(0, 0)
+                        lcd.putstr("YOU HAVE BEEN")
+                        lcd.move_to(0, 1)
+                        lcd.putstr("SPOTTED")
+                        time.sleep(2.5)
                     if buzz_timer >= buzz_interval:
                         send_feed(keys.AIO_ALARM_FEED, alarm_state)
                         buzz_timer = 0
@@ -237,11 +247,15 @@ def alarm_loop():
                     alarm_state = "0"
                     buzz_timer = 0
                     idle_seconds += 0.2
+                    if lcd:
+                        lcd.clear()
             else:
                 buzzer.duty_u16(0)
                 alarm_state = "0"
                 buzz_timer = 0
                 idle_seconds += 0.2
+                if lcd:
+                    lcd.clear()
 
             if alarm_state != prev_alarm :
                 send_feed(keys.AIO_ALARM_FEED, alarm_state)
@@ -255,5 +269,7 @@ def alarm_loop():
             print("Loop error:", e)
 
         time.sleep(0.2)
+
+alarm_loop()
 
 alarm_loop()
