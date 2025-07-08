@@ -34,7 +34,7 @@ VOLTAGE = 5
 idle_seconds = 0
 triggered_seconds = 0
 
-i2c = I2C(1, sda=Pin(14), scl=Pin(15), freq=400000)
+i2c = I2C(0, scl=Pin(1), sda=Pin(0), freq=100_000)
 device = i2c.scan()
 lcd = None
 
@@ -150,6 +150,10 @@ print("MQTT connected and subscribed.")
 def alarm_loop():
     global alarm_enabled, prev_alarm , idle_seconds, triggered_seconds
     global prev_light_per, ldr_sent, ldr_duration
+    pir_trigger_sent = False
+    hall_trigger_sent = False
+    ldr_trigger_sent = False
+    alarm_trigger_sent = False
     pir_prev = 0
     hall_prev = 1
     #prev_alarm = None
@@ -160,7 +164,10 @@ def alarm_loop():
     prev_tilt = tilt_switch.value()
     last_tilt_change = time.ticks_ms()
     tilt_debounce_ms = 300
-    last_time = time.time() 
+    last_time = time.time()
+    hall_ms = 1000 
+    last_hall_change = time.ticks_ms()
+    last_hall_sent = -1 
 
     while True:
         try:
@@ -175,6 +182,10 @@ def alarm_loop():
                 alarm_enabled = not alarm_enabled
                 if alarm_enabled:
                     print("ENABLED by tilt switch")
+                    pir_trigger_sent = False
+                    hall_trigger_sent = False
+                    ldr_trigger_sent = False
+                    alarm_trigger_sent = False
                 else:
                     print("DISABLED by tilt switch")
                     
@@ -186,26 +197,36 @@ def alarm_loop():
                 if pir_state:
                     print("motion detected")
                     send_feed(keys.AIO_PIR_FEED, "1")
+                    pir_trigger_sent = True
                 else:
                     print("no motion detected")
                     send_feed(keys.AIO_PIR_FEED, "0")
+                    pir_trigger_sent = False
 
             hall_state = hall_sensor.value()
-            
-            if hall_state != hall_prev:
+            hnow = time.ticks_ms()
+            if hall_state != hall_prev and time.ticks_diff(now, last_hall_change) > hall_ms:
                 hall_prev = hall_state
-                if hall_state == 0:
-                    print("magnet detected (TRIGGERED)")
-                    send_feed(keys.AIO_HALL_FEED, "1")
-                else:
-                    print("magnet cleared")
-                    send_feed(keys.AIO_HALL_FEED, "0")
+                last_hall_change = now
+                
+                if  hall_state != last_hall_sent:
+                    #hall_prev = hall_state
+                    if hall_state == 0:
+                        print("magnet detected (TRIGGERED)")
+                        if not hall_trigger_sent:
+                            send_feed(keys.AIO_HALL_FEED, "1")
+                            hall_trigger_sent = True
+                    else:
+                        print("magnet cleared")
+                        send_feed(keys.AIO_HALL_FEED, "0")
+                        hall_trigger_sent = False
+                    last_hall_sent = hall_state
                     
             light = ldr.read_u16()
             light_per = (light * 100) // 65535
             current_time = time.time()
             
-            if light_per >= 0.1:
+            if light_per >= 1.5:
                 print(f"UNTRACKED LIGHT DETECTION ({light_per}%) FOUND")
                 #send_feed(keys.AIO_LDR_FEED, light_per)
                 ldr_trigger = True
@@ -217,6 +238,9 @@ def alarm_loop():
                 send_feed(keys.AIO_LDR_FEED, light_per)
                 prev_light_per = light_per
                 ldr_sent = current_time
+                ldr_trigger_sent = True
+            else:
+                ldr_trigger_sent = False
                 
 
             if alarm_enabled:
@@ -240,7 +264,9 @@ def alarm_loop():
                         lcd.putstr("SPOTTED")
                         time.sleep(2.5)
                     if buzz_timer >= buzz_interval:
-                        send_feed(keys.AIO_ALARM_FEED, alarm_state)
+                        if not alarm_trigger_sent:
+                            send_feed(keys.AIO_ALARM_FEED, alarm_state)
+                            alarm_trigger_sent = True
                         buzz_timer = 0
                 else:
                     buzzer.duty_u16(0)
@@ -249,6 +275,7 @@ def alarm_loop():
                     idle_seconds += 0.2
                     if lcd:
                         lcd.clear()
+                    alarm_trigger_sent = False
             else:
                 buzzer.duty_u16(0)
                 alarm_state = "0"
@@ -256,6 +283,7 @@ def alarm_loop():
                 idle_seconds += 0.2
                 if lcd:
                     lcd.clear()
+                alarm_trigger_sent = False
 
             if alarm_state != prev_alarm :
                 send_feed(keys.AIO_ALARM_FEED, alarm_state)
