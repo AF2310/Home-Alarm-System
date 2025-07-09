@@ -84,8 +84,8 @@ def calculate_power_usage():
     energy_pico = power_pico * (idle_hours + triggered_hours)
     energy_wifi = (power_wifi_idle * idle_hours) + (power_wifi_active * triggered_hours)
     energy_pir = (power_pir_idle * idle_hours) + (power_pir_active * triggered_hours)
-    energy_hall = power_hall * triggered_hours
-    energy_hall = power_hall * (hall_triggered_seconds / 3600)
+    hall_triggered_hours = hall_triggered_seconds / 3600
+    energy_hall = power_hall * hall_triggered_hours
     energy_buzzer = power_buzzer * triggered_hours
     
     power_ldr = VOLTAGE * I_LDR
@@ -125,7 +125,7 @@ def calculate_power_usage():
     send_feed(keys.AIO_POWER_PICO_FEED, round(energy_pico, 3))
     #send_feed(keys.AIO_POWER_WIFI_FEED, round(energy_wifi, 3))
     send_feed(keys.AIO_POWER_PIR_FEED, round(energy_pir, 3))
-    send_feed(keys.AIO_POWER_HALL_FEED, round(energy_hall,5))
+    send_feed(keys.AIO_POWER_HALL_FEED, round(energy_hall, 3))
     send_feed(keys.AIO_POWER_BUZZER_FEED, round(energy_buzzer, 3))
     send_feed(keys.AIO_POWER_TOTAL_FEED, round(total_energy, 3))
 
@@ -135,8 +135,9 @@ client.subscribe(keys.AIO_BUZZER_FEED)
 print("MQTT connected and subscribed.")
 
 def alarm_loop():
-    global alarm_enabled, prev_alarm , idle_seconds, triggered_seconds , hall_triggered_seconds
+    global alarm_enabled, prev_alarm , idle_seconds, triggered_seconds
     global prev_light_per, ldr_sent, ldr_duration
+    global hall_triggered_seconds
     pir_prev = 0
     hall_prev = 1
     #prev_alarm = None
@@ -147,8 +148,7 @@ def alarm_loop():
     prev_tilt = tilt_switch.value()
     last_tilt_change = time.ticks_ms()
     tilt_debounce_ms = 300
-    last_time = time.time()
-    last_hall_change = time.ticks_ms()
+    last_time = time.time() 
 
     while True:
         try:
@@ -172,37 +172,31 @@ def alarm_loop():
             if pir_state != pir_prev:
                 pir_prev = pir_state
                 if pir_state:
-                    if alarm_enabled:
-                        print("motion detected")
-                        send_feed(keys.AIO_PIR_FEED, "1")
+                    print("motion detected")
+                    send_feed(keys.AIO_PIR_FEED, "1")
                 else:
-                    if alarm_enabled:
-                        print("no motion detected")
-                        send_feed(keys.AIO_PIR_FEED, "0")
+                    print("no motion detected")
+                    send_feed(keys.AIO_PIR_FEED, "0")
 
             hall_state = hall_sensor.value()
-            hall_now = time.ticks_ms()
-            hall_ms = 300
             
-            if hall_state != hall_prev and time.ticks_diff(hall_now, last_hall_change) > hall_ms:
-                last_hall_change = now
+            if hall_state != hall_prev:
                 hall_prev = hall_state
                 if hall_state == 0:
-                    if alarm_enabled:
-                        hall_triggered_seconds += 0.2
-                        print("magnet detected (TRIGGERED)")
-                        send_feed(keys.AIO_HALL_FEED, "1")
-                        
+                    print("magnet detected (TRIGGERED)")
+                    send_feed(keys.AIO_HALL_FEED, "1")
+                    #hall_triggered_seconds += 0.2
                 else:
-                    if alarm_enabled:
-                        print("magnet cleared")
-                        send_feed(keys.AIO_HALL_FEED, "0")
+                    print("magnet cleared")
+                    send_feed(keys.AIO_HALL_FEED, "0")
+            if hall_state == 0:
+                hall_triggered_seconds += 0.2
                     
             light = ldr.read_u16()
-            light_per = (light * 100.0) // 65535
+            light_per = round((light / 65535) * 100, 3)
             current_time = time.time()
             
-            if light_per >= 1.1:
+            if light_per > 1:
                 print(f"UNTRACKED LIGHT DETECTION ({light_per}%) FOUND")
                 #send_feed(keys.AIO_LDR_FEED, light_per)
                 ldr_trigger = True
@@ -210,18 +204,14 @@ def alarm_loop():
                 #send_feed(keys.AIO_LDR_FEED, light_per)
                 ldr_trigger = False
                 
-            if light_per != prev_light_per and current_time - ldr_sent >= ldr_duration:
-                time.sleep(2)
-                if alarm_enabled:
-                    time.sleep(2)
-                    send_feed(keys.AIO_LDR_FEED, light_per)
-                    time.sleep(2)
-                    prev_light_per = light_per
-                    ldr_sent = current_time
+            if ldr_trigger and light_per != prev_light_per and current_time - ldr_sent >= ldr_duration:
+                send_feed(keys.AIO_LDR_FEED, light_per)
+                prev_light_per = light_per
+                ldr_sent = current_time
                 
 
             if alarm_enabled:
-                if pir_state == 1 or hall_state == 1 or ldr_trigger:
+                if pir_state == 1 or hall_state == 0 or ldr_trigger:
                     buzzer.freq(2000)
                     buzzer.duty_u16(3000)
                     alarm_state = "1"
@@ -252,6 +242,6 @@ def alarm_loop():
         except Exception as e:
             print("Loop error:", e)
 
-        time.sleep(2)
+        time.sleep(0.2)
 
 alarm_loop()
