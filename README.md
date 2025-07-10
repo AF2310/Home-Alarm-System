@@ -5,7 +5,7 @@
 
 Achilles Feratidis / af224dz
 
-
+[Github Repository](https://github.com/AF2310/Home-Alarm-System/tree/main)
 
 ****
 
@@ -67,6 +67,8 @@ Hopefully by the end the reader will have gained knowledge on how a micro contro
 | <img src="https://www.electrokit.com/upload/product/41018/41018852/41018852.jpg" alt="" width="100"> | [Tilt switch](https://www.electrokit.com/tiltswitch-5vdc-vertikal) | Tilt switch sensor that detects changes in orientation or inclination. |18.50 SEK|
 | <img src="https://www.electrokit.com/upload/product/41015/41015730/41015730.jpg" alt="" width="100"> | [Hall effect sensor digital](https://www.electrokit.com/tiltswitch-5vdc-vertikal) | Hall effect sensor that detects magnetic changes | 39 SEK |
  <img src="https://www.electrokit.com/upload/quick/36/bf/5f05_41015493.jpg" alt="" width="100"> | [USB cable A male - micro B male 5m](https://www.electrokit.com/tiltswitch-5vdc-vertikal) | Cable that will be used for data transfer | 59 SEK |
+ | <img src="https://www.electrokit.com/upload/product/40850/40850001/40850001.jpg" alt="Photo resistor" width="100"> | [Photo resistor](https://www.electrokit.com/en/fotomotstand-cds-4-7-kohm) | Resistor for detecting ambient light. | 9.50 SEK |
+ | <img src="https://www.electrokit.com/upload/product/common/TO-92.jpg" alt="Photo resistor" width="100"> | [NPN Transistor](https://www.electrokit.com/2sc1775-to-92-npn-90v-50ma) | Transistor for amplifying sound signal. | 69 SEK |
 
 
 
@@ -342,6 +344,7 @@ your computer .
 * PIR sensor signal GP 27,GND pin 28, vcc pin 36
 * Buzzer signal GP 14 ,GND or groun pin 38
 * Tilt switch signal GP 27 or alternatively GP 15 , GND pin 38 , vcc pin 36
+* Photo resistor ADC GP26 , GND pin 3 on board , GP 5 SCL
 * Navigate to main.py the initialization of the pins should look like : 
 
         import time
@@ -490,6 +493,35 @@ your computer .
 
 * ![image](https://hackmd.io/_uploads/Hyh8dRmSel.png)
 * ![image](https://hackmd.io/_uploads/BJzO_0XHxx.png)
+* I have further included a photo resistor that mimicks the previous code in implementation but sends a detected light precentage instead
+
+            light = ldr.read_u16()
+            light_per = (light * 100.0) // 65535
+            current_time = time.time()
+
+            if light_per >= 1.1:
+                print(f"UNTRACKED LIGHT DETECTION ({light_per}%) FOUND")
+                #send_feed(keys.AIO_LDR_FEED, light_per)
+                ldr_trigger = True
+            else:
+                #send_feed(keys.AIO_LDR_FEED, light_per)
+                ldr_trigger = False
+                
+            if light_per != prev_light_per and current_time - ldr_sent >= ldr_duration:
+                time.sleep(2)
+                if alarm_enabled:
+                    time.sleep(2)
+                    send_feed(keys.AIO_LDR_FEED, light_per)
+                    time.sleep(2)
+                    prev_light_per = light_per
+                    ldr_sent = current_time
+                    
+*  The results of that are the following in visualization and including the power calculation are the following : 
+  
+* ![image](https://hackmd.io/_uploads/SyzYTo5Bge.png)
+* ![image](https://hackmd.io/_uploads/rypSR9sHxx.png)
+
+
 
 
 
@@ -515,6 +547,9 @@ your computer .
 * Once you have done that copy the webhook url into the url box and click to save the changes
 * If everything was executed correctly you should be now notified oh whenever the alarm has detected something while enabled 
 * ![image](https://hackmd.io/_uploads/Skzt2Amrxx.png)
+* For even more convenience to the user we can include the link to the adafruit dashboard directly in the discor message
+* ![image](https://hackmd.io/_uploads/B1WrCiqBle.png)
+
 
 ***
 
@@ -616,13 +651,20 @@ Energy (Wh) = Power (W) × Time (h) that will include active and idle current . 
 ## Transmitting data 
 ***
 
-* Message transmission is established partly through wifi connection that utilizes the existing network library as explained earlier.
-* However looking more closely into the mqtt.py file and the imported MQTT client
+* Message transmission is established partly through wifi connection that utilizes the existing network library as explained earlier which is done for conviniency purposes and making the project easily recreated .
+* However looking more closely into the mqtt.py file and the imported MQTT client.
 * It can be noted a dictionary of data is sent over the network using .publish() from the MQTTClient class.
+* A custom MQTTClient class handles the mqtt operations.
+* The use of MQTT is also chose for conveniency because it complements the adafruit framework. 
 
-* The MQTT protocol is used to transmit the message.
+* The MQTT protocol is used to transmit the message.The connect() method create a TCP connection to the mqtt broker.
+* data sent includes includes binary and numeric readings such as sensor results and power energy canculations.
 
 * Adafruit a third party then receives the data it also has access to API keys and other potential sensitive information which may undermine the purpose of a home security device.
+* Sensitive credentials are hard coded in the keys.py file which is a risk if traffic is intercepted through man in the middle attacks using various tools.
+* Based on the previous power and energy calculations int he previous sections.It can be inferred that wifi is potentially the biggest power consumer with a 00.500 W in an active state and 450 W in idle power .
+* This is reflected in the energy usage graph as well with the yellow line representing wifi being just below the total energy usage line.
+* Data transmission also include message texts to discord through a webhook url by utilizing HTTP requests by sedning json data logs.Discord utilizes a stateless HTTP which is ideal for sending one way message alerts.
 ***
 
 
@@ -632,5 +674,8 @@ Energy (Wh) = Power (W) × Time (h) that will include active and idle current . 
 ***
 
 Final result of the project: ![image](https://hackmd.io/_uploads/HJp0W4BBxe.png)
-This is the current state of the project it may be updated with a photo resistor or an arducam camera . It would have included an ultra ranging modue as well but unfortunately the one i had wasnt working .
+This is the current state of the project it may be updated with a photo resistor or an arducam camera . It would have included an ultra sonic ranging module as well but unfortunately the one i had wasnt working .
+The final project when the photo resistor is included 
+![image](https://hackmd.io/_uploads/BJV5yh5rxe.png)
+
 ***
