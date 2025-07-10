@@ -5,6 +5,7 @@ from mqtt import MQTTClient
 import keys
 
 pir_sensor = Pin(27, Pin.IN, Pin.PULL_UP)
+#hall_sensor = Pin(16, Pin.IN)
 hall_sensor = Pin(16, Pin.IN)
 tilt_switch = Pin(27, Pin.IN, Pin.PULL_UP)
 buzzer = PWM(Pin(14))
@@ -185,7 +186,7 @@ def alarm_loop():
                 if hall_state == 0:
                     print("magnet detected (TRIGGERED)")
                     send_feed(keys.AIO_HALL_FEED, "1")
-                    #hall_triggered_seconds += 0.2
+                    hall_triggered_seconds += 0.2
                 else:
                     print("magnet cleared")
                     send_feed(keys.AIO_HALL_FEED, "0")
@@ -197,21 +198,25 @@ def alarm_loop():
             current_time = time.time()
             
             if light_per > 1:
+                
                 print(f"UNTRACKED LIGHT DETECTION ({light_per}%) FOUND")
-                #send_feed(keys.AIO_LDR_FEED, light_per)
+                time.sleep(2)
+                send_feed(keys.AIO_LDR_FEED, light_per)
                 ldr_trigger = True
             else:
-                #send_feed(keys.AIO_LDR_FEED, light_per)
+                send_feed(keys.AIO_LDR_FEED, light_per)
                 ldr_trigger = False
                 
             if ldr_trigger and light_per != prev_light_per and current_time - ldr_sent >= ldr_duration:
+                
                 send_feed(keys.AIO_LDR_FEED, light_per)
+                time.sleep(2)
                 prev_light_per = light_per
                 ldr_sent = current_time
                 
 
             if alarm_enabled:
-                if pir_state == 1 or hall_state == 0 or ldr_trigger:
+                if  hall_state == 0 or ldr_trigger or pir_state == 1:
                     buzzer.freq(2000)
                     buzzer.duty_u16(3000)
                     alarm_state = "1"
